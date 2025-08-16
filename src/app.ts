@@ -14,11 +14,23 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 
+// ✅ Parse allowed origins from .env
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+
 // ✅ Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(",") || "*",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(morgan("dev"));
 
