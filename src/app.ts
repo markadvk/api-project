@@ -22,9 +22,21 @@ app.use(cors({
 app.use(express.json());
 app.use(morgan("dev"));
 
-// ✅ Health check route (needed for Render)
+// ✅ Health check (for Render)
 app.get("/", (req, res) => {
   res.json({ message: "API is running ✅" });
+});
+
+// ✅ Debug route for DB connection
+app.get("/db-test", async (req, res) => {
+  try {
+    await prisma.$connect();
+    const result = await prisma.$queryRawUnsafe(`SELECT NOW();`);
+    res.json({ status: "✅ Connected to DB", time: result });
+  } catch (err: any) {
+    console.error("❌ DB connection failed:", err);
+    res.status(500).json({ status: "❌ DB connection failed", error: err.message });
+  }
 });
 
 // ✅ Routes
@@ -33,15 +45,5 @@ app.use("/api/table", tableRoutes);
 
 // ✅ Error handler
 app.use(errorHandler);
-
-// ✅ Connect Prisma (log DB status)
-(async () => {
-  try {
-    await prisma.$connect();
-    console.log("✅ Connected to DB");
-  } catch (err) {
-    console.error("❌ DB Connection failed:", err);
-  }
-})();
 
 export default app;
